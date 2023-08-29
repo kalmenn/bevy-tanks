@@ -6,6 +6,8 @@ use bevy::{
 };
 use leafwing_input_manager::prelude::*;
 
+const PLAYER_SPEED: f32 = 500.0;
+
 fn main() {
     App::new()
         .add_plugins((
@@ -21,6 +23,7 @@ fn main() {
         ))
         .insert_resource(ShotCooldown(Duration::from_secs(5)))
         .add_systems(Startup, (setup_player, setup_camera))
+        .add_systems(Update, handle_movement)
         .run();
 }
 
@@ -68,4 +71,26 @@ fn setup_player(mut commands: Commands, ass: Res<AssetServer>) {
 
 fn setup_camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
+}
+
+fn handle_movement(
+    mut query: Query<(&mut Transform, &ActionState<Action>), With<Player>>,
+    time: Res<Time>,
+) {
+    for (mut transform, action_state) in query.iter_mut() {
+        if action_state.pressed(Action::Move) {
+            let axis_pair = action_state
+                .axis_pair(Action::Move)
+                .expect("an axis pair should be configured for this action");
+
+            let angle = axis_pair.rotation().unwrap_or_default().into_radians();
+            transform.rotation = Quat::from_rotation_z(angle);
+
+            let movement = transform.local_x()
+                * axis_pair.length().min(1.0)
+                * PLAYER_SPEED
+                * time.delta_seconds();
+            transform.translation += movement;
+        }
+    }
 }
