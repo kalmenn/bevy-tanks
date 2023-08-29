@@ -8,7 +8,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugins(InputManagerPlugin::<Action>::default())
         .insert_resource(ShotCooldown(Duration::from_secs(5)))
-        .add_systems(Startup, setup_player)
+        .add_systems(Startup, (setup_player, setup_camera))
         .run();
 }
 
@@ -48,4 +48,8 @@ fn setup_player(mut commands: Commands) {
             ..default()
         },
     ));
+}
+
+fn setup_camera(mut commands: Commands) {
+    commands.spawn(Camera2dBundle::default());
 }
