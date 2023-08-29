@@ -34,7 +34,7 @@ impl Default for Player {
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Resource)]
 struct ShotCooldown(Duration);
 
-fn setup_player(mut commands: Commands) {
+fn setup_player(mut commands: Commands, ass: Res<AssetServer>) {
     commands.spawn((
         Player::default(),
         InputManagerBundle::<Action> {
@@ -45,6 +45,10 @@ fn setup_player(mut commands: Commands) {
                 .insert(GamepadButtonType::East, Action::Shoot)
                 .insert(QwertyScanCode::Space, Action::Shoot)
                 .build(),
+            ..default()
+        },
+        SpriteBundle {
+            texture: ass.load("kenney_top-down-tanks/PNG/Tanks/tankBlue_outline.png"),
             ..default()
         },
     ));
