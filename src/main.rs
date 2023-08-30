@@ -5,10 +5,12 @@ use std::time::{Duration, Instant};
 use bevy::{
     log::{Level, LogPlugin},
     prelude::*,
-    render::camera::RenderTarget,
-    window::{PrimaryWindow, WindowRef},
 };
-use leafwing_input_manager::{axislike::DualAxisData, prelude::*};
+
+mod input;
+use input::Action;
+
+use leafwing_input_manager::prelude::*;
 
 fn main() {
     App::new()
@@ -26,19 +28,12 @@ fn main() {
         .insert_resource(ShotCooldown(Duration::from_secs(5)))
         .add_systems(Startup, (setup_player, setup_camera))
         // Chaining is a bit of a hack. For some reason, putting aim_with_cursor in PreUpdate means the action data won't propagate to handle_movement
-        .add_systems(Update, (aim_with_cursor, handle_movement).chain())
+        .add_systems(Update, (input::aim_with_cursor, handle_movement).chain())
         .run();
 }
 
-#[derive(Actionlike, Debug, Clone, PartialEq, Eq, Hash, Reflect)]
-enum Action {
-    Move,
-    Shoot,
-    Aim,
-}
-
 #[derive(Debug, Clone, Component)]
-struct Tank {
+pub struct Tank {
     /// The last [`Instant`] at which a shot was fired.
     /// The player can shoot again if the [`Duration`] set by the [`ShotCooldown`] ressource has elapsed since.
     last_shot: Instant,
@@ -58,13 +53,13 @@ impl Tank {
 }
 
 #[derive(Component)]
-struct AimWithMouse;
+pub struct AimWithMouse;
 
 #[derive(Component)]
 struct Barrel;
 
 #[derive(Debug, Clone, Resource, Deref, DerefMut)]
-struct ShotCooldown(Duration);
+pub struct ShotCooldown(Duration);
 
 fn setup_player(mut commands: Commands, ass: Res<AssetServer>, shot_cooldown: Res<ShotCooldown>) {
     let barrel_id = commands
@@ -143,37 +138,5 @@ fn handle_movement(
         } else {
             error!("a barrel should exist for this tank"); // TODO: Identify tank in error message
         };
-    }
-}
-
-fn aim_with_cursor(
-    q_window: Query<&Window, With<PrimaryWindow>>,
-    q_cameras: Query<(&Camera, &GlobalTransform)>,
-    mut q_tank: Query<(&Tank, &Transform, &mut ActionState<Action>), With<AimWithMouse>>,
-) {
-    let window = q_window.single();
-
-    let Some(cursor_world_position) = q_cameras
-        .into_iter()
-        .find(|(camera, _)| {
-            matches!(camera.target, RenderTarget::Window(WindowRef::Primary))
-        })
-        .and_then(|(camera, camera_transform)| window
-            .cursor_position()
-            .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor))
-            .map(|ray| ray.origin.truncate())
-        ) else {
-            return
-        };
-
-    for (tank, tank_transform, ref mut action_state) in q_tank.iter_mut() {
-        let direction = (cursor_world_position - tank.global_pivot_position(tank_transform))
-            .try_normalize()
-            .unwrap_or(Vec2::X);
-
-        action_state.action_data_mut(Action::Aim).axis_pair =
-            Some(DualAxisData::from_xy(direction));
-
-        action_state.press(Action::Aim);
     }
 }
