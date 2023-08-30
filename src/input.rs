@@ -5,7 +5,7 @@ use bevy::{
 };
 use leafwing_input_manager::{axislike::DualAxisData, prelude::*};
 
-use crate::{AimWithMouse, Tank};
+use crate::tanks::{AimWithMouse, Tank};
 
 #[derive(Actionlike, Debug, Clone, PartialEq, Eq, Hash, Reflect)]
 pub enum Action {
