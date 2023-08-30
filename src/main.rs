@@ -10,8 +10,6 @@ use bevy::{
 };
 use leafwing_input_manager::{axislike::DualAxisData, prelude::*};
 
-const PLAYER_SPEED: f32 = 300.0;
-
 fn main() {
     App::new()
         .add_plugins((
@@ -48,6 +46,7 @@ struct Tank {
     /// Used for setting the transform of the barrel
     barrel_id: Entity,
     pivot_offset: Vec2,
+    speed: f32,
 }
 
 impl Tank {
@@ -83,6 +82,7 @@ fn setup_player(mut commands: Commands, ass: Res<AssetServer>, shot_cooldown: Re
             last_shot: Instant::now() - shot_cooldown.0,
             barrel_id,
             pivot_offset: Vec2::new(2.0, 0.0),
+            speed: 300.0,
         },
         InputManagerBundle::<Action> {
             input_map: InputMap::default()
@@ -123,7 +123,7 @@ fn handle_movement(
 
             let movement = body_transform.local_x()
                 * axis_pair.length().min(1.0)
-                * PLAYER_SPEED
+                * tank.speed
                 * time.delta_seconds();
             body_transform.translation += movement;
         }
