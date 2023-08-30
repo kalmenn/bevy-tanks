@@ -149,11 +149,11 @@ fn handle_movement(
 fn aim_with_cursor(
     q_window: Query<&Window, With<PrimaryWindow>>,
     q_cameras: Query<(&Camera, &GlobalTransform)>,
-    mut q_player: Query<(&Tank, &Transform, &mut ActionState<Action>), With<AimWithMouse>>,
+    mut q_tank: Query<(&Tank, &Transform, &mut ActionState<Action>), With<AimWithMouse>>,
 ) {
     let window = q_window.single();
 
-    let Some(world_position) = q_cameras
+    let Some(cursor_world_position) = q_cameras
         .into_iter()
         .find(|(camera, _)| {
             matches!(camera.target, RenderTarget::Window(WindowRef::Primary))
@@ -166,8 +166,8 @@ fn aim_with_cursor(
             return
         };
 
-    for (tank, tank_transform, ref mut action_state) in q_player.iter_mut() {
-        let direction = (world_position - tank.global_pivot_position(tank_transform))
+    for (tank, tank_transform, ref mut action_state) in q_tank.iter_mut() {
+        let direction = (cursor_world_position - tank.global_pivot_position(tank_transform))
             .try_normalize()
             .unwrap_or(Vec2::X);
 
